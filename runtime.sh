@@ -83,7 +83,7 @@ _target_help() {
 
         # Update git submodules if --update was used
         if (( makesh_update )); then
-            git submodules update --remote
+            git submodule update --remote
             exit 0
         fi
 
