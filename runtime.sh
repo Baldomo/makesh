@@ -55,7 +55,7 @@ _target_help() {
 
     # Parse command line options
     OPT_SHORT="fh"
-    OPT_LONG=("force" "help")
+    OPT_LONG=("force" "help" "update")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
         msg::die "Error parsing command line"
     fi
@@ -81,6 +81,12 @@ _target_help() {
             exit 0
         fi
 
+        # Update git submodules if --update was used
+        if (( makesh_update )); then
+            git submodules update --remote
+            exit 0
+        fi
+
         # Otherwise, error
         msg::error "Target not specified! Use --help for more information."
         _usage
@@ -99,12 +105,6 @@ _target_help() {
         msg::error "Uknown target: $1"
         _usage
         exit 1
-    fi
-
-    # Update git submodules if --update was used
-    if (( makesh_update )); then
-        git submodules update --remote
-        exit 0
     fi
 
     # Show help for target if --help <target> was used
