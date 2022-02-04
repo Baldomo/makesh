@@ -14,44 +14,28 @@ makesh_force=0
 
 source "$makesh_lib_dir"/message.sh
 
-# Generic check for boolean value or result of [[ ]]/test
-# $1 : condition as boolean
-# $2 : (optional) command to execute if condition is true but makesh_force is zero
-# TODO: implement ^^^
-# TODO: fix evaluating arguments: operators are left-associative so lib::check_bool
-# function call takes precedence over && or ||
-lib::check_bool() {
-    msg::msg2 "Got argument: $*"
-    if "$@" && (( ! makesh_force )); then
-        msg::warning "condition $1 is true"
-        trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
-        shopt -s extdebug
-    fi
-    return
-}
-
 # Checks existence of a directory
 # $1 : directory path, can be relative
 # $2 : (optional) command to execute if condition is true but makesh_force is zero
 lib::check_dir() {
     if [ -d "$(realpath "$1")" ] && (( ! makesh_force )); then
-        msg::warning "directory $1 already exists"
-        trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
-        shopt -s extdebug
+        lib::return "directory $1 already exists"
     fi
-    return
 }
 
 # Checks existence of file
 # $1 : file path, can be relative
 # $2 : (optional) command to execute if condition is true but makesh_force is zero
 lib::check_file() {
+    # if [ -f "$(realpath "$1")" ] && (( ! makesh_force )); then
+    #     msg::warning "file $1 already exists"
+    #     trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
+    #     shopt -s extdebug
+    # fi
+    # return
     if [ -f "$(realpath "$1")" ] && (( ! makesh_force )); then
-        msg::warning "file $1 already exists"
-        trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
-        shopt -s extdebug
+        lib::return "file $1 already exists"
     fi
-    return
 }
 
 # Run another target before the caller, passing $makesh_force decreased by 1.
@@ -74,4 +58,13 @@ lib::requires() {
     fi
     # shift
     make::"$1" "${@:2}"
+}
+
+# Unconditionally returns from current target
+# $1 : string, message top be displayed before returning (uses msg::warn)
+lib::return() {
+    [[ $# -gt 0 ]] && msg::warning "$@"
+    trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
+    shopt -s extdebug
+    return
 }

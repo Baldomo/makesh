@@ -11,10 +11,10 @@
 - [API documentation](#api-documentation)
   - [`generate.sh`](#generatesh)
   - [`lib.sh`](#libsh)
-    - [`lib::check_bool`](#libcheck_bool)
     - [`lib::check_dir`](#libcheck_dir)
     - [`lib::check_file`](#libcheck_file)
     - [`lib::requires`](#librequires)
+    - [`lib::return`](#libreturn)
   - [`runtime.sh`](#runtimesh)
   - [`message.sh`](#messagesh)
     - [`msg::ask`](#msgask)
@@ -31,15 +31,15 @@
 ## Installation
 `makesh` is built to be used as a git submodule for easy update and usage inside a bigger project/repository.
 
-```
-$ git submodule add https://github.com/Baldomo/makesh
+```shell
+$ git submodule add https://github.com/Baldomo/makesh.git
 $ git submodule update --init
 ```
 
 ## Usage
 To start using `makesh` after placing the submodule in the `makesh` directory, just run
 
-```
+```shell
 $ makesh/generate.sh
 ```
 > **Note:** see `makesh/generate.sh --help` for more information
@@ -53,7 +53,7 @@ Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash
 2. can produces files and skip running if files are already present
 3. can ignore present files and run anyway ("force")
 4. can call other targets before (or after) doing whatever it needs to do
-5. can depend on boolean conditions (see API)
+5. can return and be skipped arbitrarily (see API)
 6. uses utility functions provided by `makesh`
 7. provides its own documentation with special comment syntax
 
@@ -65,7 +65,7 @@ For example:
 make::your_target() {                       # (1)
     lib::check_file "build-artifact.o"      # (2) and (3)
     lib::requires "other_target"            # (4)
-    lib::check_boolean [[ -f "yourfile" ]]  # (5)
+    [[ -f "yourfile" ]] && lib::return      # (5)
     # Using "lib::" functions implies (6)
 }
 ```
@@ -80,26 +80,37 @@ make::your_target() {                       # (1)
 
 ## API documentation
 
+> **WARNING**: the API is very prone to breaking changes and incomplete documentation. It's a work in progress, after all.
+
 ### `generate.sh`
 Simple shell script which generates a `make.sh` example file in your root project directory (or an arbitrary directory).
 Get more information with
 
-```
+```shell
 $ makesh/generate.sh --help
 ```
+
+---
 
 ### `lib.sh`
 Contains the fundamental functions and variables provided by `makesh` to write your targets. 
 The code is fairly well-documented, reading it directly is recommended.
 
-#### `lib::check_bool`
-<!-- TODO: documentation -->
-
 #### `lib::check_dir`
-<!-- TODO: documentation -->
+Break from current target if directory `$1` exists. Does not support wildcards. Can accept relative paths.
+
+Usage examples:
+```bash
+lib::check_dir "some_dir"
+```
 
 #### `lib::check_file`
-<!-- TODO: documentation -->
+Break from current target if file `$1` exists. Does not support wildcards. Can accept relative paths.
+
+Usage examples:
+```bash
+lib::check_file "some_dir/some_file"
+```
 
 #### `lib::requires`
 Run another target before the caller, passing `$makesh_force` decreased by 1.
@@ -110,8 +121,23 @@ Usage examples:
 lib::requires "other_target"
 ```
 
+#### `lib::return`
+Exits from the current target (and *only* the current target) unconditionally. Can be used to exit on arbitrary rules, for example:
+
+```bash
+if [[ "test" = "test" ]]; then
+    lib::return "optional message"
+fi
+```
+
+Will basically resume execution after skipping a single target, in short.
+
+---
+
 ### `runtime.sh`
-<!-- TODO: documentation -->
+Contains code for the main entrypoint of the generated `make.sh` script. Does not export functions. Generates output for `--help` automatically and parses command line flags.
+
+---
 
 ### `message.sh`
 A modified version of `/usr/share/makepkg/util/message.sh` from Arch's `makepkg` packaging software.
@@ -180,6 +206,8 @@ Output format:
 
 #### `msg::colorize`
 Activates output colorization if supported by the output terminal. Used internally.
+
+---
 
 ### `parseopts.sh`
 A modified version of `/usr/share/makepkg/util/parseopts.sh` from Arch's `makepkg` packaging software.
