@@ -36,6 +36,18 @@ $ git submodule add https://github.com/Baldomo/makesh.git
 $ git submodule update --init
 ```
 
+You can update your submodule to the latest version with
+
+```shell
+$ git submodule update --remote
+```
+
+or using the utility function
+
+```shell
+$ ./make.sh --update
+```
+
 ## Usage
 To start using `makesh` after placing the submodule in the `makesh` directory, just run
 

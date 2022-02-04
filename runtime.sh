@@ -20,6 +20,9 @@ Usage: $0 [options] <target>
         Can be called multiple (N) times and will set \$makesh_force to N, e.g.:
             ./$(basename "$0") -fffff
 
+    --update
+        update makesh to the latest commit (updates git submodules).
+
     -h, --help    
         display this help message or target-specific help (--help <target>).
 EOF
@@ -59,11 +62,12 @@ _target_help() {
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
 
-    declare makesh_help
+    declare makesh_help makesh_update
     while true; do
         case "$1" in
             -f|--force) (( makesh_force++ )) ;;
             -h|--help)  makesh_help=1 ;;
+            --update)   makesh_update=1 ;;
             --)         shift; break 2 ;;
         esac
         shift
@@ -95,6 +99,12 @@ _target_help() {
         msg::error "Uknown target: $1"
         _usage
         exit 1
+    fi
+
+    # Update git submodules if --update was used
+    if (( makesh_update )); then
+        git submodules update --remote
+        exit 0
     fi
 
     # Show help for target if --help <target> was used
