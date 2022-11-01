@@ -87,6 +87,12 @@ _target_help() {
             exit 0
         fi
 
+        # Maybe a make::all target exists? If so, run it
+        if declare -F -- make::all >/dev/null; then
+            make::all
+            exit 0
+        fi
+
         # Otherwise, error
         msg::error "Target not specified! Use --help for more information."
         _usage

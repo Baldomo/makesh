@@ -27,12 +27,6 @@ lib::check_dir() {
 # $1 : file path, can be relative
 # $2 : (optional) command to execute if condition is true but makesh_force is zero
 lib::check_file() {
-    # if [ -f "$(realpath "$1")" ] && (( ! makesh_force )); then
-    #     msg::warning "file $1 already exists"
-    #     trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
-    #     shopt -s extdebug
-    # fi
-    # return
     if [ -f "$(realpath "$1")" ] && (( ! makesh_force )); then
         lib::return "file $1 already exists"
     fi

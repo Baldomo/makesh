@@ -57,8 +57,8 @@ EOF
 source $_relative_makesh_dir/lib.sh
 source $_relative_makesh_dir/message.sh
 
-#:(hello) Help for the "hello" target
-make::hello() {
+#:(all) Help for the default target
+make::all() {
     msg::msg "Hello! Check out the README!"
 }
 

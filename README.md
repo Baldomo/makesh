@@ -11,21 +11,8 @@
 - [API documentation](#api-documentation)
   - [`generate.sh`](#generatesh)
   - [`lib.sh`](#libsh)
-    - [`lib::check_dir`](#libcheck_dir)
-    - [`lib::check_file`](#libcheck_file)
-    - [`lib::requires`](#librequires)
-    - [`lib::return`](#libreturn)
   - [`runtime.sh`](#runtimesh)
   - [`message.sh`](#messagesh)
-    - [`msg::ask`](#msgask)
-    - [`msg::die`](#msgdie)
-    - [`msg::error`](#msgerror)
-    - [`msg::msg`](#msgmsg)
-    - [`msg::msg2`](#msgmsg2)
-    - [`msg::plain`](#msgplain)
-    - [`msg::plainerror`](#msgplainerror)
-    - [`msg::warning`](#msgwarning)
-    - [`msg::colorize`](#msgcolorize)
   - [`parseopts.sh`](#parseoptssh)
 
 ## Installation
@@ -59,6 +46,18 @@ $ makesh/generate.sh
 This will create a simple `make.sh` file in your current directory (using `pwd`) with the basic imports and a sample target.
 You will only need to write your build targets as explained in the rest of the documentation, `makesh` will take care of the CLI and utilities.
 
+You can run a target by calling
+
+```shell
+$ ./make.sh <target>
+```
+
+or, without specifying a target, `make::all` will be called
+
+```shell
+$ ./make.sh
+```
+
 ### Writing your targets
 Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash function which:
 1. has a name starting with `make::`
@@ -81,6 +80,8 @@ make::your_target() {                       # (1)
     # Using "lib::" functions implies (6)
 }
 ```
+
+> Keep in mind that the `make::all` target can be executed by not passing any target name to the `make.sh` script, as mentioned above.
 
 ### CLI
 `runtime.sh` will provide a simple CLI that can:
