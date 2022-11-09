@@ -54,8 +54,8 @@ _target_help() {
     fi
 
     # Parse command line options
-    OPT_SHORT="fh"
-    OPT_LONG=("force" "help" "update")
+    OPT_SHORT="fh?"
+    OPT_LONG=("force" "help?" "update")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
         msg::die "Error parsing command line"
     fi

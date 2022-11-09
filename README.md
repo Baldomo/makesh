@@ -16,7 +16,7 @@
   - [`parseopts.sh`](#parseoptssh)
 
 ## Installation
-`makesh` is built to be used as a git submodule for easy update and usage inside a bigger project/repository.
+`makesh` is built to be used as a [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for easy update and usage inside a bigger project/repository.
 
 ```shell
 $ git submodule add https://github.com/Baldomo/makesh.git
@@ -26,7 +26,7 @@ $ git submodule update --init
 You can update your submodule to the latest version with
 
 ```shell
-$ git submodule update --remote
+$ git submodule update --remote --init
 ```
 
 or using the utility function
