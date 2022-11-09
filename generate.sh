@@ -36,7 +36,7 @@ EOF
     OPT_SHORT="d:hn:"
     OPT_LONG=("dir:" "help" "name:")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-        msg::error "Error parsing command line"
+        msg::error "Error parsing command line."
         _usage
         exit 1
     fi
@@ -53,6 +53,7 @@ EOF
         shift
     done
 
+    # Try looking for the library in current directory
     if [[ ! "$_makesh_dir" = "$_output_dir"/* ]]; then
         msg::die "makesh is not a submodule in this directory: %s" "$_output_dir"
     fi

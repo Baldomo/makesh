@@ -20,7 +20,7 @@ Usage: $0 [options] <target>
         Can be called multiple (N) times and will set \$makesh_force to N, e.g.:
             ./$(basename "$0") -fffff
 
-    --update
+    -u, --update
         update makesh to the latest commit (updates git submodules).
 
     -h, --help    
@@ -54,10 +54,12 @@ _target_help() {
     fi
 
     # Parse command line options
-    OPT_SHORT="fh?"
+    OPT_SHORT="fh?u"
     OPT_LONG=("force" "help?" "update")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-        msg::die "Error parsing command line"
+        msg::error "Error parsing command line."
+        _usage
+        exit 1
     fi
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
@@ -65,10 +67,10 @@ _target_help() {
     declare makesh_help makesh_update
     while true; do
         case "$1" in
-            -f|--force) (( makesh_force++ )) ;;
-            -h|--help)  makesh_help=1 ;;
-            --update)   makesh_update=1 ;;
-            --)         shift; break 2 ;;
+            -f|--force)  (( makesh_force++ )) ;;
+            -h|--help)   makesh_help=1 ;;
+            -u|--update) makesh_update=1 ;;
+            --)          shift; break 2 ;;
         esac
         shift
     done
@@ -89,19 +91,20 @@ _target_help() {
 
         # Maybe a make::all target exists? If so, run it
         if declare -F -- make::all >/dev/null; then
+            msg::msg "Running target make::all"
             make::all
             exit 0
         fi
 
         # Otherwise, error
-        msg::error "Target not specified! Use --help for more information."
+        msg::error "Target not specified (and default target make::all not defined)!"
         _usage
         exit 1
     fi
 
     # "help" is not a target but we know what the user meant
     if [[ "$1" = "help" ]]; then
-        msg::error "Target 'help' does not exist (use --help)! Showing help anyways"
+        msg::error "Target 'help' does not exist (use --help)! Showing help anyways."
         _usage
         exit 1
     fi

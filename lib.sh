@@ -16,7 +16,6 @@ source "$makesh_lib_dir"/message.sh
 
 # Checks existence of a directory
 # $1 : directory path, can be relative
-# $2 : (optional) command to execute if condition is true but makesh_force is zero
 lib::check_dir() {
     if [ -d "$(realpath "$1")" ] && (( ! makesh_force )); then
         lib::return "directory $1 already exists"
@@ -25,7 +24,6 @@ lib::check_dir() {
 
 # Checks existence of file
 # $1 : file path, can be relative
-# $2 : (optional) command to execute if condition is true but makesh_force is zero
 lib::check_file() {
     if [ -f "$(realpath "$1")" ] && (( ! makesh_force )); then
         lib::return "file $1 already exists"
@@ -50,7 +48,6 @@ lib::requires() {
         msg::error "Uknown target required: $1"
         exit 1
     fi
-    # shift
     make::"$1" "${@:2}"
 }
 
