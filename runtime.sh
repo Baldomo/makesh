@@ -15,15 +15,18 @@ Usage: $0 [options] <target>
   Targets: $_targets
 
   Options:
-    -f, --force    
+    -f
+    --force <N>
         force the target to run even if files have already been built.
         Can be called multiple (N) times and will set \$makesh_force to N, e.g.:
             ./$(basename "$0") -fffff
+        Or, using the long flag:
+            ./$(basename "$0") --force 5
 
     -u, --update
         update makesh to the latest commit (updates git submodules).
 
-    -h, --help    
+    -h, --help
         display this help message or target-specific help (--help <target>).
 EOF
 }
@@ -55,11 +58,9 @@ _target_help() {
 
     # Parse command line options
     OPT_SHORT="fh?u"
-    OPT_LONG=("force" "help?" "update")
+    OPT_LONG=("force:" "help?" "update")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-        msg::error "Error parsing command line."
-        _usage
-        exit 1
+        msg::die "Error parsing command line. Use --help to see CLI usage."
     fi
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
@@ -67,13 +68,20 @@ _target_help() {
     declare makesh_help makesh_update
     while true; do
         case "$1" in
-            -f|--force)  (( makesh_force++ )) ;;
+            -f)          (( makesh_force++ )) ;;
+            --force)     shift; makesh_force="$1" ;;
             -h|--help)   makesh_help=1 ;;
             -u|--update) makesh_update=1 ;;
             --)          shift; break 2 ;;
         esac
         shift
     done
+
+    # Exit if --force was given anything other than a number
+    case $makesh_force in
+        ''|*[!0-9]*) msg::die "Invalid value passed to --force: %s" "$makesh_force" ;;
+    esac
+
 
     # No targets were passed from command line
     if [[ "$#" = 0 ]]; then
@@ -91,7 +99,16 @@ _target_help() {
 
         # Maybe a make::all target exists? If so, run it
         if declare -F -- make::all >/dev/null; then
-            msg::msg "Running target make::all"
+            if (( makesh_force )); then
+                msg::msg "Running target make::all with %d force" "$makesh_force"
+                # If at least one -f was passed to the CLI, increase it by one
+                # to directly propagate it to the other targets called by 
+                # make::all, so user won't need to use -ff (since one -f is 
+                # consumed by running make::all)
+                (( makesh_force++ ))
+            else
+                msg::msg "Running target make::all"
+            fi
             make::all
             exit 0
         fi
@@ -123,10 +140,10 @@ _target_help() {
     fi
 
     # Run the actual target
-    if [[ $makesh_force -gt 1 ]]; then
-        msg::msg "Running target $1 at full force"
+    if (( makesh_force )); then
+        msg::msg "Running target make::$1 with %d force" "$makesh_force"
     else
-        msg::msg "Running target $1"
+        msg::msg "Running target make::$1"
     fi
     make::"$1"
     exit 0

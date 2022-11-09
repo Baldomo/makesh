@@ -36,9 +36,7 @@ EOF
     OPT_SHORT="d:hn:"
     OPT_LONG=("dir:" "help" "name:")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
-        msg::error "Error parsing command line."
-        _usage
-        exit 1
+        msg::die "Error parsing command line. Use --help to see CLI usage."
     fi
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
