@@ -4,6 +4,7 @@ set -eo pipefail
 
 _script="$(realpath "$0")"
 _makesh_dir="$(dirname "$_script")"
+_enable_shellcheck=1
 _output_dir="$(pwd)"
 _output_name="make.sh"
 
@@ -16,6 +17,11 @@ _usage() {
 
 Usage: $0 [options]
   Options:
+    -s
+    --no-shellcheck
+        disable generation of a .shellcheckrc file with useful
+        defaults to make your make.sh script shellcheck-compliant. 
+
     -n <filename>
     --name <filename>
         change the name of the generated file.
@@ -31,10 +37,12 @@ EOF
 }
 
 {
+    # Activate terminal colors
     msg::colorize
 
-    OPT_SHORT="d:hn:"
-    OPT_LONG=("dir:" "help" "name:")
+    # Parse command line flags
+    OPT_SHORT="d:hn:s"
+    OPT_LONG=("dir:" "help" "name:" "no-shellcheck")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
         msg::die "Error parsing command line. Use --help to see CLI usage."
     fi
@@ -43,23 +51,42 @@ EOF
 
     while true; do
         case "$1" in
-            -n|--name)  shift; _output_name="$1" ;;
-            -d|--dir)   shift; _output_dir="$(realpath "$1")" ;;
-            -h|--help)  _usage; exit ;;
-            --)         shift; break 2 ;;
+            -d|--dir)
+                shift; _output_dir="$(realpath "$1")" ;;
+            -n|--name)
+                shift; _output_name="$1" ;;
+            -h|--help)
+                _usage; exit ;;
+            -s|--no-shellcheck)
+                _enable_shellcheck=0 ;;
+            --)
+                shift; break 2 ;;
         esac
         shift
     done
 
-    # Try looking for the library in current directory
+    # Try looking for the library in output directory
     if [[ ! "$_makesh_dir" = "$_output_dir"/* ]]; then
-        msg::die "makesh is not a submodule in this directory: %s" "$_output_dir"
+        msg::warning "makesh is not a submodule in this directory: %s" "$_output_dir"
     fi
 
+    # Calculate makesh library path relative to the output directory
     _relative_makesh_dir="$(realpath --relative-to "$_output_dir" "$_makesh_dir")"
     msg::msg "makesh library found at: $_relative_makesh_dir"
-    msg::msg "generated script: $_output_dir/$_output_name"
 
+    # Generate .shellcheckrc
+    if (( _enable_shellcheck )); then
+        cat <<EOF > "$_output_dir"/".shellcheckrc"
+# Don't highlight unreachable code (SC2317)
+disable=SC2317
+
+# Enable following external files when sourcing
+external-sources=true
+EOF
+        msg::msg "generated Shellcheck config: $_output_dir/.shellcheckrc"
+    fi
+
+    # Write the actual make.sh script
     cat <<EOF > "$_output_dir"/"$_output_name"
 #!/usr/bin/env bash
 source $_relative_makesh_dir/lib.sh
@@ -73,5 +100,7 @@ make::all() {
 source $_relative_makesh_dir/runtime.sh
 EOF
 
+    # Make the make.sh runnable
     chmod +x "$_output_dir"/"$_output_name"
+    msg::msg "generated script: $_output_dir/$_output_name"
 }

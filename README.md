@@ -1,12 +1,12 @@
 # make.sh <!-- omit in toc -->
 `makesh` is a simple requirement-based task runner similar to GNU Make, minus the C-oriented build system. `makesh` is also written in Bash.
 
-This project was born of necessity and many late hours wasted on writing files for Make and other such task runners, but it's not meant as a complete replacement. POSIX compliance is not guaranteed, as is compatibility with older bash/shell interpreter versions.
+This project was born of necessity and many late hours wasted on writing files for Make and other such task runners, but it's not meant as a complete replacement. Compatibility with Bash versions older than 5.0 is not guaranteed.
 
 ### Table of contents
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Writing your targets](#writing-your-targets)
+  - [Writing targets](#writing-targets)
   - [CLI](#cli)
 - [Library](#library)
   - [`generate.sh`](#generatesh)
@@ -23,28 +23,30 @@ $ git submodule add https://github.com/Baldomo/makesh.git
 $ git submodule update --init
 ```
 
-You can update your submodule to the latest version with
-
-```terminal
-$ git submodule update --remote --init
-```
-
-or using the utility function
+You can update `makesh` to the latest version with
 
 ```terminal
 $ ./make.sh --update
 ```
 
+which basically runs 
+
+```terminal
+$ git submodule update --remote --init
+```
+
 ## Usage
-To start using `makesh` after placing the submodule in the `makesh` directory, just run
+To start using `makesh` after placing the submodule in your project directory, just run
 
 ```terminal
 $ makesh/generate.sh
 ```
-> **Note:** see `makesh/generate.sh --help` for more information
+> **Note:** see `makesh/generate.sh --help` for more information and CLI options.
 
 This will create a simple `make.sh` file in your current directory (using `pwd`) with the basic imports and a default target.
 You will only need to write your build targets as explained in the rest of the documentation, `makesh` will take care of the CLI and utilities.
+
+A `.shellcheckrc` will also be generated alongside the script with useful defaults for Shellcheck users (mainly to disable [SC2317](https://github.com/koalaman/shellcheck/wiki/SC2317)). This is the default behaviour but it can be disabled using the corresponding CLI flag.
 
 You can run a target by calling
 
@@ -58,7 +60,7 @@ or, without specifying a target, `make::all` will be called
 $ ./make.sh
 ```
 
-### Writing your targets
+### Writing targets
 Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash function which:
 1. has a name starting with `make::`
 2. can produces files and skip running if files are already present
@@ -98,7 +100,7 @@ make::utility() {
 
 make::all() {
     source ./include.sh
-	lib::requires make::utility
+    lib::requires make::utility
     msg::msg "Hello world!"
 }
 ```
@@ -117,6 +119,11 @@ The CLI is provided automatically by sourcing `runtime.sh`. It can:
 - show documentation for a target
 - show documentation and usage information for itself
 - check if a called target exists or not
+
+For more information and full usage, see
+```terminal
+$ ./make.sh --help
+```
 
 ## Library
 
@@ -173,7 +180,7 @@ $ makesh/generate.sh --help
 ---
 
 ### `lib.sh`
-Contains the fundamental functions and variables provided by `makesh` to write your targets. 
+Contains useful functions and variables to be used when writing targets. 
 The code is fairly well-documented, reading it directly is recommended.
 
 #### `$makesh_force`
@@ -230,13 +237,13 @@ lib::check_file "some_dir/some_file"
 
 #### `lib::requires()`
 Run another target before the caller, passing `$makesh_force` decreased by 1.
-This lets you have granular control over the depth to which propagate --force to the called targets. Will also forward all extra arguments to the required target.
+This lets you have granular control over the depth to which propagate `--force` to the called targets. Will also forward all extra arguments to the required target.
 
 Usage examples:
 ```bash
 lib::requires "other_target"
 
-lib::requires other_target
+lib::requires other_target "string argument"
 
 lib::requires make::other_target
 ```
@@ -267,7 +274,7 @@ Contains function for pretty formatted output. All functions are `printf`-like (
 ```bash
 msg::msg "Simple single message"
 
-msg::error "Docker container not started: %s" "$container_name"
+msg::error "Docker container failed to start: %s" "$container_name"
 
 msg::die "Critical error during execution"
 ```

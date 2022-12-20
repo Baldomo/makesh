@@ -19,6 +19,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Tries to activate terminal color sequences.
 msg::colorize() {
 	# prefer terminal safe colored and bold text when tput is supported
 	if tput setaf 0 &>/dev/null; then
@@ -39,10 +40,7 @@ msg::colorize() {
 	readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
 }
 
-# plain/plainerr are primarily used to continue a previous message on a new
-# line, depending on whether the first line is a regular message or an error
-# output
-
+# Primarily used to continue a previous message on a new line.
 msg::plain() {
 	(( QUIET )) && return
 	local mesg=$1; shift
@@ -50,10 +48,12 @@ msg::plain() {
 	printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@"
 }
 
+# Primarily used to continue a previous error on a new line.
 msg::plainerr() {
 	msg::plain "$@" >&2
 }
 
+# A standard output message.
 msg::msg() {
 	(( QUIET )) && return
 	local mesg=$1; shift
@@ -61,6 +61,7 @@ msg::msg() {
 	printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
 }
 
+# An indented output message.
 msg::msg2() {
 	(( QUIET )) && return
 	local mesg=$1; shift
@@ -68,25 +69,31 @@ msg::msg2() {
 	printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
 }
 
+# Used to ask for user input.
 msg::ask() {
 	local mesg=$1; shift
 	# shellcheck disable=SC2059
 	printf "${BLUE}::${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}" "$@"
 }
 
+# A warning message.
 msg::warning() {
 	local mesg=$1; shift
 	# shellcheck disable=SC2059
 	printf "${YELLOW}==> $(gettext "WARNING:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
+# An error message with function name reporting. Will not stop execution.
 msg::error() {
 	local mesg=$1; shift
 	# shellcheck disable=SC2059
 	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} (${FUNCNAME[1]}) ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
+# An critical error message with function name reporting. Will stop execution.
 msg::die() {
-	msg::error "$@"
+	local mesg=$1; shift
+	# shellcheck disable=SC2059
+	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} (${FUNCNAME[1]}) ${mesg}${ALL_OFF}\n" "$@" >&2
 	exit 1
 }

@@ -14,7 +14,7 @@ makesh_force=0
 
 source "$makesh_lib_dir"/message.sh
 
-# Checks existence of a directory
+# Checks existence of a directory.
 # $1 : directory path, can be relative
 lib::check_dir() {
     if [ -d "$(realpath "$1")" ] && (( ! makesh_force )); then
@@ -22,7 +22,7 @@ lib::check_dir() {
     fi
 }
 
-# Checks existence of file
+# Checks existence of a file.
 # $1 : file path, can be relative
 lib::check_file() {
     if [ -f "$(realpath "$1")" ] && (( ! makesh_force )); then
@@ -30,29 +30,35 @@ lib::check_file() {
     fi
 }
 
-# Run another target before the caller, passing $makesh_force decreased by 1.
+# Run another target before the caller, decreasing $makesh_force by 1.
 # This lets the user have granular control over the depth to which propagate
 # --force to the called targets. Will also forward all extra arguments to the
-# required target
+# required target.
 lib::requires() {
     makesh_force=$(( makesh_force > 0 ? makesh_force-1 : 0 ))
-    if ! declare -F -- make::"$1" >/dev/null; then
-        if declare -F -- "$1" >/dev/null; then
-            if [[ ! "$1" =~ ^(make::) ]]; then
-                msg::warning "(lib::requires) Non-target function detected! Be careful."
-            fi
-            # shift
-            "$1" "${@:2}"
-            return
-        fi
-        msg::error "Uknown target required: $1"
-        exit 1
+
+    # If the given target name does not start with `make::` but a valid target
+    # exists when `make::` is prefixed to the name, run it
+    if declare -F -- make::"$1" >/dev/null; then
+        make::"$1" "${@:2}"
+        return
     fi
-    make::"$1" "${@:2}"
+
+    # If the given target exists, run it as is
+    if declare -F -- "$1" >/dev/null; then
+        if [[ ! "$1" =~ ^(make::) ]]; then
+            msg::warning "(lib::requires) Non-target function detected! Be careful."
+        fi
+        "$1" "${@:2}"
+        return
+    fi
+
+    # Exit with error if target still wasn't found
+    msg::die "Unknown target: $1"
 }
 
-# Unconditionally returns from current target
-# $1 : string, message top be displayed before returning (uses msg::warn)
+# Unconditionally returns from current target.
+# $1 : string, message to be displayed before returning (uses msg::warn)
 lib::return() {
     [[ $# -gt 0 ]] && msg::warning "$@"
     trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
