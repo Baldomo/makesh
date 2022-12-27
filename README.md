@@ -64,11 +64,12 @@ $ ./make.sh
 Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash function which:
 1. has a name starting with `make::`
 2. can produces files and skip running if files are already present
-3. can ignore present files and run anyway ("force", see [`$makesh_force`](#makesh_force))
-4. can call other targets before (or after) doing whatever it needs to do
-5. can return and be skipped arbitrarily (see API)
-6. can use utility functions provided by `makesh`
-7. provides its own documentation with special comment syntax
+3. can skip running if arbitrary files have not been change since the last run (kind of like Make)
+4. can ignore present files and run anyway ("force", see [`$makesh_force`](#makesh_force))
+5. can call other targets before (or after) doing whatever it needs to do
+6. can return and be skipped arbitrarily (see API)
+7. can use utility functions provided by `makesh`
+8. provides its own documentation with special comment syntax
 
 For example:
 
@@ -76,10 +77,11 @@ For example:
 #:(your_target) First line of documentation for your_target
 #:(your_target) Second line of documentation  (7)
 make::your_target() {                       # (1)
-    lib::check_file "build-artifact.o"      # (2) and (3)
-    lib::requires "other_target"            # (4)
-    [[ -f "yourfile" ]] && lib::return      # (5)
-    # Using "lib::" functions implies (6)
+    lib::needs_change "main.c"              # (3)
+    lib::check_file "main.o"                # (2) and (4)
+    lib::requires "other_target"            # (5)
+    [[ -f "yourfile" ]] && lib::return      # (6)
+    # Using "lib::" functions implies (7)
 }
 ```
 
@@ -151,6 +153,7 @@ The "standard library" structure can be summed up as follows:
             <li><code>makesh_script</code></li>
             <li><code>makesh_script_dir</code></li>
             <li><code>makesh_lib_dir</code></li>
+            <li><code>makesh_enable_cache</code></li>
         </ul>
       </td>
     </tr>
@@ -210,6 +213,9 @@ lib::check_file() {
 }
 ```
 
+#### `$makesh_enable_cache`
+If set to 0, disables the file change cache. If the cache is disabled, `lib::needs_change` will never skip the target which called it.
+
 #### `$makesh_script`
 The absolute path to the root `make.sh` script in the project directory. For example `/home/user/project/make.sh`.
 
@@ -218,6 +224,25 @@ The absolute path of the directory of `$makesh_script` (the project directory). 
 
 #### `$makesh_lib_dir`
 The absolute path of the directory containing the `makesh` library. For example `/home/user/project/makesh`.
+
+#### `lib::needs_changes()`
+Checks changes for a set of files by comparing the last modified time of the file to an empty file inside a temporary cache in `/tmp` or `$TMPDIR` (if set). If the file in the project directory is older than the cache, the target is not executed. Basically works like Make checking changes in files.
+
+```make
+target: main.sh other.sh
+	@echo "Target was run"
+```
+
+and
+
+```bash
+make::target() {
+    lib::needs_change main.sh other.sh
+    echo "Target was run"
+}
+```
+
+are equivalent.
 
 #### `lib::check_dir()`
 Break from current target if directory `$1` exists. Does not support wildcards. Can accept relative paths.

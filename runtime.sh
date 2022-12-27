@@ -82,7 +82,6 @@ _target_help() {
         ''|*[!0-9]*) msg::die "Invalid value passed to --force: %s" "$makesh_force" ;;
     esac
 
-
     # No targets were passed from command line
     if [[ "$#" = 0 ]]; then
         # Allow calling just --help
