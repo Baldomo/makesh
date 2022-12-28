@@ -14,31 +14,32 @@ This project was born of necessity and many late hours wasted on writing files f
   - [`runtime.sh`](#runtimesh)
   - [`message.sh`](#messagesh)
   - [`parseopts.sh`](#parseoptssh)
+  - [`cache.sh`](#cachesh)
 
 ## Installation
-`makesh` is built to be used as a [git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for easy update and usage inside a bigger project/repository.
+`makesh` is built to be used as a [Git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for easy update and usage inside a bigger project/repository.
 
-```terminal
+```shell
 $ git submodule add https://github.com/Baldomo/makesh.git
 $ git submodule update --init
 ```
 
 You can update `makesh` to the latest version with
 
-```terminal
+```shell
 $ ./make.sh --update
 ```
 
 which basically runs 
 
-```terminal
+```shell
 $ git submodule update --remote --init
 ```
 
 ## Usage
 To start using `makesh` after placing the submodule in your project directory, just run
 
-```terminal
+```shell
 $ makesh/generate.sh
 ```
 > **Note:** see `makesh/generate.sh --help` for more information and CLI options.
@@ -50,13 +51,13 @@ A `.shellcheckrc` will also be generated alongside the script with useful defaul
 
 You can run a target by calling
 
-```terminal
+```shell
 $ ./make.sh <target>
 ```
 
 or, without specifying a target, `make::all` will be called
 
-```terminal
+```shell
 $ ./make.sh
 ```
 
@@ -64,7 +65,7 @@ $ ./make.sh
 Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash function which:
 1. has a name starting with `make::`
 2. can produces files and skip running if files are already present
-3. can skip running if arbitrary files have not been change since the last run (kind of like Make)
+3. can skip running if arbitrary files have not been change since the last run (kind of like Make, see [`lib::needs_changes()`](#libneeds_changes))
 4. can ignore present files and run anyway ("force", see [`$makesh_force`](#makesh_force))
 5. can call other targets before (or after) doing whatever it needs to do
 6. can return and be skipped arbitrarily (see API)
@@ -73,7 +74,7 @@ Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash
 
 For example:
 
-```bash
+```sh
 #:(your_target) First line of documentation for your_target
 #:(your_target) Second line of documentation  (7)
 make::your_target() {                       # (1)
@@ -89,7 +90,7 @@ make::your_target() {                       # (1)
 
 You can also just source other files containing valid targets (and **just** the targets, no sourcing of `makesh` files) in your `make.sh` script and use them just the same as if they were in the main script. Note that `source` will not change the current working directory.
 
-```bash
+```sh
 # scripts/utility.sh
 
 make::utility() {
@@ -97,7 +98,7 @@ make::utility() {
 }
 ```
 
-```bash
+```sh
 # make.sh
 
 make::all() {
@@ -123,7 +124,7 @@ The CLI is provided automatically by sourcing `runtime.sh`. It can:
 - check if a called target exists or not
 
 For more information and full usage, see
-```terminal
+```shell
 $ ./make.sh --help
 ```
 
@@ -176,7 +177,7 @@ The "standard library" structure can be summed up as follows:
 Simple shell script which generates a `make.sh` example file in your root project directory (or an arbitrary directory).
 Get more information with
 
-```terminal
+```shell
 $ makesh/generate.sh --help
 ```
 
@@ -189,7 +190,7 @@ The code is fairly well-documented, reading it directly is recommended.
 #### `$makesh_force`
 Counts how many --force were used (as an integer number). Gets decreased by 1 each time `lib::requires` is called. You can use it explicitly in your targets when you want to be able to skip running a command if not forced, for example:
 
-```bash
+```sh
 make::your_target() {
     if (( ! makesh_force )); then
         # This will run if makesh_force is zero
@@ -203,7 +204,7 @@ make::your_target() {
 
 Note that functions under `lib::` already check `makesh_force` and act accordingly, see the implementation of `lib::check_file`:
 
-```bash
+```sh
 lib::check_file() {
     # Returns from the caller target if file exists 
     # AND makesh_force is zero
@@ -235,7 +236,7 @@ target: main.sh other.sh
 
 and
 
-```bash
+```sh
 make::target() {
     lib::needs_change main.sh other.sh
     echo "Target was run"
@@ -248,7 +249,7 @@ are equivalent.
 Break from current target if directory `$1` exists. Does not support wildcards. Can accept relative paths.
 
 Usage examples:
-```bash
+```sh
 lib::check_dir "some_dir"
 ```
 
@@ -256,7 +257,7 @@ lib::check_dir "some_dir"
 Break from current target if file `$1` exists. Does not support wildcards. Can accept relative paths.
 
 Usage examples:
-```bash
+```sh
 lib::check_file "some_dir/some_file"
 ```
 
@@ -265,7 +266,7 @@ Run another target before the caller, passing `$makesh_force` decreased by 1.
 This lets you have granular control over the depth to which propagate `--force` to the called targets. Will also forward all extra arguments to the required target.
 
 Usage examples:
-```bash
+```sh
 lib::requires "other_target"
 
 lib::requires other_target "string argument"
@@ -276,7 +277,7 @@ lib::requires make::other_target
 #### `lib::return()`
 Exits from the current target (and *only* the current target) unconditionally. Can be used to exit on arbitrary rules, for example:
 
-```bash
+```sh
 if [[ "test" = "test" ]]; then
     lib::return "optional message"
 fi
@@ -296,7 +297,7 @@ A modified version of `/usr/share/makepkg/util/message.sh` from Arch's `makepkg`
 
 Contains function for pretty formatted output. All functions are `printf`-like (first parameter is a string with formatting instructions, all other parameters are printed as per the instructions), for example:
 
-```bash
+```sh
 msg::msg "Simple single message"
 
 msg::error "Docker container failed to start: %s" "$container_name"
@@ -370,7 +371,7 @@ Contains a single function: `lib::parseopts`, see [the source code](/parseopts.s
 > - options with optional arguments should be suffixed with a question mark (`?`).
 
 Example usage from `runtime.sh`:
-```bash
+```sh
 OPT_SHORT="fh?u"
 OPT_LONG=("force" "help?" "update")
 if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
@@ -394,3 +395,8 @@ done
 
 # All remaining arguments are left in "$@"
 ```
+
+---
+
+### `cache.sh`
+Contains internal functions to setup and access a project-specific file cache which can track file changes across runs.
