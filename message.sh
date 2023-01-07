@@ -80,20 +80,20 @@ msg::ask() {
 msg::warning() {
 	local mesg=$1; shift
 	# shellcheck disable=SC2059
-	printf "${YELLOW}==> $(gettext "WARNING:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+	printf "${YELLOW}==> WARNING:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
 # An error message with function name reporting. Will NOT stop execution.
 msg::error() {
 	local mesg=$1; shift
 	# shellcheck disable=SC2059
-	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} (${FUNCNAME[1]}) ${mesg}${ALL_OFF}\n" "$@" >&2
+	printf "${RED}==> ERROR:${ALL_OFF}${BOLD} (${FUNCNAME[1]}) ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
 # An critical error message with function name reporting. WILL stop execution.
 msg::die() {
 	local mesg=$1; shift
 	# shellcheck disable=SC2059
-	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} (${FUNCNAME[1]}) ${mesg}${ALL_OFF}\n" "$@" >&2
+	printf "${RED}==> ERROR:${ALL_OFF}${BOLD} (${FUNCNAME[1]}) ${mesg}${ALL_OFF}\n" "$@" >&2
 	exit 1
 }

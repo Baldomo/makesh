@@ -43,6 +43,11 @@ lib::needs_changes() {
 
     # Iterate over the given files
     for _file in "$@"; do
+        if [ ! -f "$_file" ]; then
+            msg::msg2 "File %s does not exist, skipping" "$_file"
+            continue
+        fi
+
         if [[ $_file =~ \.\. ]] && [[ $_file =~ \./ ]]; then
             msg::msg2 "File path %s contains invalid redirections (./ or ../), skipping" "$_file"
             continue
@@ -103,7 +108,7 @@ lib::requires() {
 # Unconditionally returns from current target.
 # $1 : string, message to be displayed before returning (uses msg::warn)
 lib::return() {
-    [[ $# -gt 0 ]] && msg::warning "$@"
+    [ $# -gt 0 ] && msg::warning "$@"
     trap 'trap "shopt -u extdebug; trap - DEBUG; return 0" DEBUG; return 2' DEBUG
     shopt -s extdebug
     return

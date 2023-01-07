@@ -19,15 +19,15 @@ _md5() {
         return 0
     else
         for _path in /usr/gnu/bin /opt/csw/bin /sbin /bin /usr/bin /usr/sbin; do
-            if [[ -x "${_path}/md5" ]]; then
+            if [ -x "${_path}/md5" ]; then
                 _sum=$(${_path}/md5 "$@")
                 echo "${_sum##* }"
                 return 0
-            elif [[ -x "${_path}/md5sum" ]]; then
+            elif [ -x "${_path}/md5sum" ]; then
                 _sum=$(${_path}/md5sum "$@")
                 echo "${_sum%% *}"
                 return 0
-            elif [[ -x "${_path}/gmd5sum" ]]; then
+            elif [ -x "${_path}/gmd5sum" ]; then
                 _sum=$(${_path}/gmd5sum "$@")
                 echo "${_sum%% *}"
                 return 0
@@ -45,12 +45,12 @@ _md5() {
 # $1 : a directory
 _setup_cache_dir() {
     local _cache_dir="/tmp/makesh"
-    if [[ -n ${TMPDIR+x} ]]; then
+    if [ -n "${TMPDIR+x}" ]; then
         _cache_dir="$TMPDIR"/makesh
     fi
 
     local _project_dir_sum
-    if ! _project_dir_sum=$(_md5 "$1"); then
+    if ! _project_dir_sum=$(echo "$1" | _md5 -); then
         return 1
     fi
 

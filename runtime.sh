@@ -52,7 +52,7 @@ _target_help() {
     msg::colorize
 
     # Root is bad
-    if [[ "$EUID" = 0 ]]; then
+    if [ "$EUID" = 0 ]; then
         msg::die "Don't run this script as root!"
     fi
 
@@ -83,7 +83,7 @@ _target_help() {
     esac
 
     # No targets were passed from command line
-    if [[ "$#" = 0 ]]; then
+    if [ "$#" = 0 ]; then
         # Allow calling just --help
         if (( makesh_help )); then
             _usage
@@ -119,7 +119,7 @@ _target_help() {
     fi
 
     # "help" is not a target but we know what the user meant
-    if [[ "$1" = "help" ]]; then
+    if [ "$1" = "help" ]; then
         msg::error "Target 'help' does not exist (use --help)! Showing help anyways."
         _usage
         exit 1
