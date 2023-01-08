@@ -2,14 +2,14 @@
 
 set -eo pipefail
 
-_script="$(realpath "$0")"
-_makesh_dir="$(dirname "$_script")"
+_makesh_dir="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 _enable_shellcheck=1
 _output_dir="$(pwd)"
 _output_name="make.sh"
 
 source "$_makesh_dir"/message.sh
 source "$_makesh_dir"/parseopts.sh
+source "$_makesh_dir"/util.sh
 
 _usage() {
     cat <<EOF
@@ -52,7 +52,7 @@ EOF
     while true; do
         case "$1" in
             -d|--dir)
-                shift; _output_dir="$(realpath "$1")" ;;
+                shift; _output_dir="$(util::realpath "$1")" ;;
             -n|--name)
                 shift; _output_name="$1" ;;
             -h|--help)
@@ -71,12 +71,12 @@ EOF
     fi
 
     # Calculate makesh library path relative to the output directory
-    _relative_makesh_dir="$(realpath --relative-to "$_output_dir" "$_makesh_dir")"
+    _relative_makesh_dir="${_makesh_dir#"$_output_dir/"}"
     msg::msg "makesh library found at: $_relative_makesh_dir"
 
     # Generate .shellcheckrc
     if (( _enable_shellcheck )); then
-        cat <<EOF > "$_output_dir"/".shellcheckrc"
+        cat <<EOF > "$_output_dir/.shellcheckrc"
 # Don't highlight unreachable code (SC2317)
 disable=SC2317
 
@@ -87,7 +87,7 @@ EOF
     fi
 
     # Write the actual make.sh script
-    cat <<EOF > "$_output_dir"/"$_output_name"
+    cat <<EOF > "$_output_dir/$_output_name"
 #!/usr/bin/env bash
 source $_relative_makesh_dir/lib.sh
 source $_relative_makesh_dir/message.sh
@@ -101,6 +101,6 @@ source $_relative_makesh_dir/runtime.sh
 EOF
 
     # Make the make.sh runnable
-    chmod +x "$_output_dir"/"$_output_name"
+    chmod +x "$_output_dir/$_output_name"
     msg::msg "generated script: $_output_dir/$_output_name"
 }
