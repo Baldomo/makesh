@@ -14,7 +14,7 @@ This project was born of necessity and many late hours wasted on writing files f
   - [`runtime.sh`](#runtimesh)
   - [`message.sh`](#messagesh)
   - [`parseopts.sh`](#parseoptssh)
-  - [`cache.sh`](#cachesh)
+  - [`util.sh`](#utilsh)
 
 ## Installation
 `makesh` is built to be used as a [Git submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) for easy update and usage inside a bigger project/repository.
@@ -72,11 +72,13 @@ Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash
 7. can use utility functions provided by `makesh`
 8. provides its own documentation with special comment syntax
 
+> Think of your `makesh` script more like a normal Bash script than a special file: being simple functions, targets are really powerful! You can source run any other function or command, create and remove files and even source other `makesh` scripts (see below).
+
 For example:
 
 ```sh
 #:(your_target) First line of documentation for your_target
-#:(your_target) Second line of documentation  (7)
+#:(your_target) Second line of documentation  (8)
 make::your_target() {                       # (1)
     lib::needs_change "main.c"              # (3)
     lib::check_file "main.o"                # (2) and (4)
@@ -398,5 +400,8 @@ done
 
 ---
 
-### `cache.sh`
-Contains internal functions to setup and access a project-specific file cache which can track file changes across runs.
+### `util.sh`
+Miscellaneous utilities, where public functions are under `util::`. Documentation can be found in the code. Contains, in no particular order:
+- Internal functions to setup and access a project-specific file cache which can track file changes across runs.
+- A `md5` utility wrapper which detects and uses the correct command for the current system (Unix and BSDs often ship with different commands).
+- An adaptation of [mkropat/sh-realpath](https://github.com/mkropat/sh-realpath), a portable, Bash-ish implementation of `realpath`. Functions **do not** accept options like the real program. Originally MIT licensed.
