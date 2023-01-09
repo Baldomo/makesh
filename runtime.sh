@@ -118,23 +118,40 @@ _target_help() {
         exit 1
     fi
 
-    # "help" is not a target but we know what the user meant
-    if [ "$1" = "help" ]; then
-        msg::error "Target 'help' does not exist (use --help)! Showing help anyways."
-        _usage
-        exit 1
-    fi
-
-    # Exit if target does not exist (checks if function is defined in this script)
-    if ! declare -F -- make::"$1" >/dev/null; then
-        msg::error "Uknown target: $1"
-        _usage
-        exit 1
-    fi
+    # Special targets
+    case "$1" in
+        # "help" is not a target but we know what the user meant
+        help) 
+            msg::error "Target 'help' does not exist (use --help)! Showing help anyways."
+            _usage
+            exit 1
+            ;;
+        # Special case for make::clean, clean cache unless explicitly disabled.
+        # Will also always run without errors, even if make::clean does not exist
+        clean)
+            (( makesh_enable_cache_autoclean )) && lib::clean_cache
+            ;;
+        # Catch-all for normal targets
+        *)
+            # Exit if target does not exist (checks if function is defined)
+            if ! declare -F -- make::"$1" >/dev/null; then
+                msg::error "Unknown target: $1"
+                # Give a tip if the given command line argument starts with "make::"
+                [[ $1 = make::* ]] && msg::plain "Did you mean '%s'?" "${1#"make::"}"
+                exit 1
+            fi
+            ;;
+    esac
 
     # Show help for target if --help <target> was used
     if (( makesh_help )); then
         _target_help "$1"
+        exit 0
+    fi
+
+    # If after all the checks the given target still does not exist (may be a
+    # special target), just exit the script
+    if ! declare -F -- make::"$1" >/dev/null; then
         exit 0
     fi
 
@@ -144,6 +161,7 @@ _target_help() {
     else
         msg::msg "Running target make::$1"
     fi
+
     make::"$1"
     exit 0
 }

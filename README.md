@@ -216,9 +216,6 @@ lib::check_file() {
 }
 ```
 
-#### `$makesh_enable_cache`
-If set to 0, disables the file change cache. If the cache is disabled, `lib::needs_change` will never skip the target which called it.
-
 #### `$makesh_script`
 The absolute path to the root `make.sh` script in the project directory. For example `/home/user/project/make.sh`.
 
@@ -228,8 +225,17 @@ The absolute path of the directory of `$makesh_script` (the project directory). 
 #### `$makesh_lib_dir`
 The absolute path of the directory containing the `makesh` library. For example `/home/user/project/makesh`.
 
+#### `$makesh_cache_dir`
+The absolute path of the file cache directory. Defaults to `$makesh_lib_dir/cache`.
+
+#### `$makesh_enable_cache`
+If set to 0, disables the file change cache. If the cache is disabled, `lib::needs_change` will never skip the target which called it.
+
+#### `$makesh_enable_cache_autoclean`
+Disables clearing the cache automatically when calling the `make::clean` target if set to 0 (zero).
+
 #### `lib::needs_changes()`
-Checks changes for a set of files by comparing the last modified time of the file to an empty file inside a temporary cache in `/tmp` or `$TMPDIR` (if set). If the file in the project directory is older than the cache, the target is not executed. Basically works like Make checking changes in files.
+Checks changes for a set of files by comparing the last modified time of the file to an empty file inside `$makesh_cache_dir`. If the file in the project directory is older than the cache, the target is not executed (basically works like Make checking changes in files). Also follows links if the given files are symlinks.
 
 ```make
 target: main.sh other.sh
@@ -240,12 +246,20 @@ and
 
 ```sh
 make::target() {
-    lib::needs_change main.sh other.sh
+    lib::needs_changes main.sh other.sh
     echo "Target was run"
 }
 ```
 
 are equivalent.
+
+#### `lib::clean_cache()`
+Deletes the file cache directory, but only if it is somewhere inside the project directory. Will be ran automatically when calling the `make::clean` target, even if such a target does not exist.
+
+Usage examples:
+```sh
+lib::clean_cache
+```
 
 #### `lib::check_dir()`
 Break from current target if directory `$1` exists. Does not support wildcards. Can accept relative paths.
@@ -401,7 +415,5 @@ done
 ---
 
 ### `util.sh`
-Miscellaneous utilities, where public functions are under `util::`. Documentation can be found in the code. Contains, in no particular order:
-- Internal functions to setup and access a project-specific file cache which can track file changes across runs.
-- A `md5` utility wrapper which detects and uses the correct command for the current system (Unix and BSDs often ship with different commands).
+Miscellaneous utilities, of which public functions are under `util::`. Documentation can be found in the code. Contains:
 - An adaptation of [mkropat/sh-realpath](https://github.com/mkropat/sh-realpath), a portable, Bash-ish implementation of `realpath`. Functions **do not** accept options like the real program. Originally MIT licensed.
