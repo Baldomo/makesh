@@ -4,7 +4,7 @@ source "$makesh_lib_dir"/message.sh
 source "$makesh_lib_dir"/parseopts.sh
 source "$makesh_lib_dir"/lib.sh
 
-# Print usage
+# Prints script usage and defined targets
 _usage() {
     local _targets
     _targets=$(compgen -A "function" | sed -nE "s/^make::(.*)$/\1/p" | sort | tr '\n' ' ')
@@ -28,6 +28,9 @@ Usage: $0 [options] <target>
 
     -u, --update
         update makesh to the latest commit (updates git submodules).
+
+    -v, --version
+        prints the current version and other informations on makesh.
 
     -h, --help
         display this help message or target-specific help (--help <target>).
@@ -64,6 +67,21 @@ _is_func() {
     declare -F -- "$1" >/dev/null
 }
 
+# Prints formatted version information
+_version() {
+    msg::msg "Version"
+    local _tag
+    pushd "$makesh_lib_dir" >/dev/null || exit 1
+    if _tag=$(git describe --exact-match 2>/dev/null); then
+        msg::msg2 "Version: $_tag"
+    fi
+    msg::plain "%-10sr%s.%s" "Revision:" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+    msg::plain "%-10s%s" "Commit:" "$(git rev-parse HEAD)"
+    msg::plain "%-10s%s" "Date:" "$(git show -s --format="%ci")"
+    msg::plain "%-10s%s" "Branch:" "$(git rev-parse --abbrev-ref HEAD)"
+    popd >/dev/null || exit 1
+}
+
 {
     # Colors
     msg::colorize
@@ -74,23 +92,24 @@ _is_func() {
     fi
 
     # Parse command line options
-    OPT_SHORT="fh?lu"
-    OPT_LONG=("force:" "help?" "list" "update")
+    OPT_SHORT="fh?luv"
+    OPT_LONG=("force:" "help?" "list" "update" "version")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
         msg::die "Error parsing command line. Use --help to see CLI usage."
     fi
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
 
-    declare makesh_help makesh_list makesh_update
+    declare makesh_help makesh_list makesh_update makesh_version
     while true; do
         case "$1" in
-            -f)          (( makesh_force++ )) ;;
-            --force)     shift; makesh_force="$1" ;;
-            -h|--help)   makesh_help=1 ;;
-            -l|--list)   makesh_list=1 ;;
-            -u|--update) makesh_update=1 ;;
-            --)          shift; break 2 ;;
+            -f)           (( makesh_force++ )) ;;
+            --force)      shift; makesh_force="$1" ;;
+            -h|--help)    makesh_help=1 ;;
+            -l|--list)    makesh_list=1 ;;
+            -u|--update)  makesh_update=1 ;;
+            -v|--version) makesh_version=1 ;;
+            --)           shift; break 2 ;;
         esac
         shift
     done
@@ -102,6 +121,11 @@ _is_func() {
 
     # No targets were passed from command line
     if [ "$#" = 0 ]; then
+        if (( makesh_version )); then
+            _version
+            exit 0
+        fi
+
         # Allow calling just --help
         if (( makesh_help )); then
             _usage

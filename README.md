@@ -150,15 +150,7 @@ The "standard library" structure can be summed up as follows:
     <tr>
       <td><a href="#libsh"><code>lib.sh</code></a></td>
       <td><code>lib::*</code></td>
-      <td>
-        <ul>
-            <li><code>makesh_force</code></li>
-            <li><code>makesh_script</code></li>
-            <li><code>makesh_script_dir</code></li>
-            <li><code>makesh_lib_dir</code></li>
-            <li><code>makesh_enable_cache</code></li>
-        </ul>
-      </td>
+      <td><code>$makesh_*</code></td>
     </tr>
     <tr>
       <td><a href="#messagesh"><code>message.sh</code></a></td>
@@ -168,6 +160,11 @@ The "standard library" structure can be summed up as follows:
     <tr>
       <td><a href="#parseoptssh"><code>parseopts.sh</code></a></td>
       <td><code>lib::parseopts</code></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="#utilsh"><code>utils.sh</code></a></td>
+      <td><code>util::*</code></td>
       <td></td>
     </tr>
   </tbody>
