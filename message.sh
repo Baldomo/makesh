@@ -45,7 +45,7 @@ msg::plain() {
 	(( QUIET )) && return
 	local mesg=$1; shift
 	# shellcheck disable=SC2059
-	printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@"
+	printf "    ${mesg}${ALL_OFF}\n" "$@"
 }
 
 # Primarily used to continue a previous error on a new line.

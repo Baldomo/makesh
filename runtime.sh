@@ -7,7 +7,7 @@ source "$makesh_lib_dir"/lib.sh
 # Print usage
 _usage() {
     local _targets
-    _targets=$(declare -F | awk '{print $NF}' | sed -nE "s/(make::)(.*)$/\2/p" | sort | tr '\n' ' ')
+    _targets=$(compgen -A "function" | sed -nE "s/^make::(.*)$/\1/p" | sort | tr '\n' ' ')
     cat <<EOF
 ./$(basename "$0") - makesh-enabled build script
 
@@ -22,6 +22,9 @@ Usage: $0 [options] <target>
             ./$(basename "$0") -fffff
         Or, using the long flag:
             ./$(basename "$0") --force 5
+    
+    -l, --list
+        shows a list of all defined targets and their help message, if present.
 
     -u, --update
         update makesh to the latest commit (updates git submodules).
@@ -40,10 +43,19 @@ _target_help() {
     # Get line with a specific comment and use it as documentation
     # Look for lines starting with `#:(<target>)`
     _help=$(sed -nE "s/^#:\(($1)\)\s+(.*)$/\2/p" "$makesh_script")
-    msg::msg "./make.sh $1"
+    msg::msg "make::%s" "$1"
     # Print all lines with plain()
     IFS=$'\n'; for _line in $_help; do
-        msg::plain "$_line"
+        msg::plain "%s" "$_line"
+    done
+}
+
+# Lists targets and their help comments
+_target_list() {
+    msg::msg "Listing targets"
+    _targets=$(compgen -A "function" | sed -nE "s/^make::(.*)$/\1/p")
+    for _target in $_targets; do
+        _target_help "$_target"
     done
 }
 
@@ -57,20 +69,21 @@ _target_help() {
     fi
 
     # Parse command line options
-    OPT_SHORT="fh?u"
-    OPT_LONG=("force:" "help?" "update")
+    OPT_SHORT="fh?lu"
+    OPT_LONG=("force:" "help?" "list" "update")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
         msg::die "Error parsing command line. Use --help to see CLI usage."
     fi
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
 
-    declare makesh_help makesh_update
+    declare makesh_help makesh_list makesh_update
     while true; do
         case "$1" in
             -f)          (( makesh_force++ )) ;;
             --force)     shift; makesh_force="$1" ;;
             -h|--help)   makesh_help=1 ;;
+            -l|--list)   makesh_list=1 ;;
             -u|--update) makesh_update=1 ;;
             --)          shift; break 2 ;;
         esac
@@ -87,6 +100,11 @@ _target_help() {
         # Allow calling just --help
         if (( makesh_help )); then
             _usage
+            exit 0
+        fi
+
+        if (( makesh_list )); then
+            _target_list
             exit 0
         fi
 
@@ -121,10 +139,13 @@ _target_help() {
     # Special targets
     case "$1" in
         # "help" is not a target but we know what the user meant
-        help) 
-            msg::error "Target 'help' does not exist (use --help)! Showing help anyways."
-            _usage
-            exit 1
+        # (unless make::help actually exists)
+        help)
+            if ! declare -F -- make::help >/dev/null; then
+                msg::error "Target 'help' does not exist (use --help)! Showing help anyways."
+                _usage
+                exit 1
+            fi
             ;;
         # Special case for make::clean, clean cache unless explicitly disabled.
         # Will also always run without errors, even if make::clean does not exist
