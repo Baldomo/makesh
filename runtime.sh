@@ -4,6 +4,26 @@ source "$makesh_lib_dir"/message.sh
 source "$makesh_lib_dir"/parseopts.sh
 source "$makesh_lib_dir"/lib.sh
 
+# Generates a completion script for the current makesh file.
+# The completion is only valid when used in the same directory as the script.
+_completion() {
+    cat <<EOF
+# Run this in your terminal:
+# source <(./$(basename "$0") --completion)
+_makesh() {
+    local cur prev words cword
+    _init_completion -s || return
+    _targets=\$(sed -nE "s/^make::(.*)\(\)\s+\{$/\1/p" "$(basename "$0")")
+    _options="--completion --help --list --update --version --force \$_targets"
+    COMPREPLY=( \$(compgen -W "\$_options" -- "\$cur") )
+    if [ "\$prev" = "--force" ] || [ "\$prev" = "--help" ]; then
+        COMPREPLY=( \$(compgen -W "\$_targets" -- "\$cur") )
+    fi
+}
+complete -o default -F _makesh $(basename "$0")
+EOF
+}
+
 # Prints script usage and defined targets
 _usage() {
     local _targets
@@ -28,6 +48,12 @@ Usage: $0 [options] <target>
 
     -u, --update
         update makesh to the latest commit (updates git submodules).
+
+    -c, --completion
+        generates Bash completion commands for the current terminal.
+        Requires bash-completion to be installed.
+        The output needs to be sourced manually:
+            source <(./$(basename "$0") --completion)
 
     -v, --version
         prints the current version and other informations on makesh.
@@ -92,24 +118,30 @@ _version() {
     fi
 
     # Parse command line options
-    OPT_SHORT="fh?luv"
-    OPT_LONG=("force:" "help?" "list" "update" "version")
+    OPT_SHORT="cfh?luv"
+    OPT_LONG=("completion" "force:" "help?" "list" "update" "version")
     if ! lib::parseopts "$OPT_SHORT" "${OPT_LONG[@]}" -- "$@"; then
         msg::die "Error parsing command line. Use --help to see CLI usage."
     fi
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
 
-    declare makesh_help makesh_list makesh_update makesh_version
+    declare \
+        makesh_completion \
+        makesh_help \
+        makesh_list \
+        makesh_update \
+        makesh_version
     while true; do
         case "$1" in
-            -f)           (( makesh_force++ )) ;;
-            --force)      shift; makesh_force="$1" ;;
-            -h|--help)    makesh_help=1 ;;
-            -l|--list)    makesh_list=1 ;;
-            -u|--update)  makesh_update=1 ;;
-            -v|--version) makesh_version=1 ;;
-            --)           shift; break 2 ;;
+            -c|--completion) makesh_completion=1 ;;
+            -f)              (( makesh_force++ )) ;;
+            --force)         shift; makesh_force="$1" ;;
+            -h|--help)       makesh_help=1 ;;
+            -l|--list)       makesh_list=1 ;;
+            -u|--update)     makesh_update=1 ;;
+            -v|--version)    makesh_version=1 ;;
+            --)              shift; break 2 ;;
         esac
         shift
     done
@@ -121,6 +153,13 @@ _version() {
 
     # No targets were passed from command line
     if [ "$#" = 0 ]; then
+        # Generate completion script
+        if (( makesh_completion )); then
+            _completion
+            exit 0
+        fi
+
+        # Show version information
         if (( makesh_version )); then
             _version
             exit 0

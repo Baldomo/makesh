@@ -89,15 +89,16 @@ EOF
     # Write the actual make.sh script
     cat <<EOF > "$_output_dir/$_output_name"
 #!/usr/bin/env bash
-source $_relative_makesh_dir/lib.sh
-source $_relative_makesh_dir/message.sh
+makesh_lib_dir=$_makesh_dir
+source "\$makesh_lib_dir"/lib.sh
+source "\$makesh_lib_dir"/message.sh
 
 #:(all) Help for the default target
 make::all() {
     msg::msg "Hello! Check out the README!"
 }
 
-source $_relative_makesh_dir/runtime.sh
+source "\$makesh_lib_dir"/runtime.sh
 EOF
 
     # Make the make.sh runnable
