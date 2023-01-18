@@ -179,7 +179,10 @@ _version() {
 
         # Update git submodules if --update was used
         if (( makesh_update )); then
-            git submodule update --remote
+            _submodule="$(basename "$makesh_lib_dir")"
+            msg::msg "Updating makesh (submodule \"$_submodule\")"
+            git submodule sync "$_submodule" && \
+                git submodule update --remote --progress "$_submodule"
             exit 0
         fi
 

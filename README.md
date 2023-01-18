@@ -33,7 +33,7 @@ $ ./make.sh --update
 which basically runs 
 
 ```shell
-$ git submodule update --remote --init
+$ git submodule update --remote "$makesh_lib_dir"
 ```
 
 ## Usage

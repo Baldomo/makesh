@@ -5,7 +5,7 @@ set -eo pipefail
 _makesh_dir="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 _enable_shellcheck=1
 _output_dir="$(pwd)"
-_output_name="make.sh"
+_output_name="make"
 
 source "$_makesh_dir"/message.sh
 source "$_makesh_dir"/parseopts.sh
@@ -25,7 +25,7 @@ Usage: $0 [options]
     -n <filename>
     --name <filename>
         change the name of the generated file.
-        Defaults to "make.sh".
+        Defaults to "make".
 
     -d <directory>
     --dir <directory>
@@ -34,6 +34,44 @@ Usage: $0 [options]
     -h, --help
         display this help message.
 EOF
+}
+
+# Generates a makesh script in the given file path (directory AND file)
+# $1 : the output file path
+_generate_script() {
+    cat <<EOF > "$1"
+#!/usr/bin/env bash
+makesh_lib_dir="$_makesh_dir"
+source "\$makesh_lib_dir"/lib.sh
+source "\$makesh_lib_dir"/message.sh
+
+#:(all) Help for the default target
+make::all() {
+    msg::msg "Hello! Check out the README!"
+}
+
+source "\$makesh_lib_dir"/runtime.sh
+EOF
+
+    # Make the script runnable
+    chmod +x "$_output_dir/$_output_name"
+    msg::msg "generated script: $_output_dir/$_output_name"
+}
+
+# Generates a .shellcheckrc in the given file path (directory AND file)
+# $1 : the output file path
+_generate_shellcheckrc() {
+    cat <<EOF > "$1"
+# Don't highlight unreachable code (SC2317)
+disable=SC2317
+
+# Enable following external files when sourcing
+external-sources=true
+
+# Look for files in ./$_makesh_dir
+source-path=$_makesh_dir
+EOF
+    msg::msg "generated Shellcheck config: $_output_dir/.shellcheckrc"
 }
 
 {
@@ -48,7 +86,6 @@ EOF
     fi
     set -- "${OPTRET[@]}"
     unset OPT_SHORT OPT_LONG OPTRET
-
     while true; do
         case "$1" in
             -d|--dir)
@@ -76,32 +113,33 @@ EOF
 
     # Generate .shellcheckrc
     if (( _enable_shellcheck )); then
-        cat <<EOF > "$_output_dir/.shellcheckrc"
-# Don't highlight unreachable code (SC2317)
-disable=SC2317
-
-# Enable following external files when sourcing
-external-sources=true
-EOF
-        msg::msg "generated Shellcheck config: $_output_dir/.shellcheckrc"
+        # If the file already exists, ask the user to overwrite
+        if [ -f "$_output_dir/.shellcheckrc" ]; then
+            msg::ask ".shellcheckrc already exists, overwrite? [y/N] "
+            read -r _reply
+            _reply="${_reply:-N}"
+            case $_reply in
+                [Yy]) _generate_shellcheckrc "$_output_dir/.shellcheckrc" ;;
+                [Nn]) msg::msg2 "Skipped generation of .shellcheckrc" ;;
+                *) msg::die "Invalid response \"$_reply\"" ;;
+            esac
+        else
+            _generate_shellcheckrc "$_output_dir/.shellcheckrc"
+        fi
     fi
 
-    # Write the actual make.sh script
-    cat <<EOF > "$_output_dir/$_output_name"
-#!/usr/bin/env bash
-makesh_lib_dir=$_makesh_dir
-source "\$makesh_lib_dir"/lib.sh
-source "\$makesh_lib_dir"/message.sh
-
-#:(all) Help for the default target
-make::all() {
-    msg::msg "Hello! Check out the README!"
-}
-
-source "\$makesh_lib_dir"/runtime.sh
-EOF
-
-    # Make the make.sh runnable
-    chmod +x "$_output_dir/$_output_name"
-    msg::msg "generated script: $_output_dir/$_output_name"
+    # Write the actual makesh script. If the file already exists, ask the user 
+    # to overwrite
+    if [ -f "$_output_dir/$_output_name" ]; then
+        msg::ask "makesh script already exists, overwrite? [y/N] "
+        read -r _reply
+        _reply="${_reply:-N}"
+        case $_reply in
+            [Yy]) _generate_script "$_output_dir/$_output_name" ;;
+            [Nn]) msg::msg2 "Skipped generation of makesh script" ;;
+            *) msg::die "Invalid response \"$_reply\"" ;;
+        esac
+    else
+        _generate_script "$_output_dir/$_output_name"
+    fi
 }
