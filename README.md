@@ -1,4 +1,4 @@
-# make.sh <!-- omit in toc -->
+# makesh <!-- omit in toc -->
 `makesh` is a simple requirement-based task runner similar to GNU Make, minus the C-oriented build system. `makesh` is also written in Bash.
 
 This project was born of necessity and many late hours wasted on writing files for Make and other such task runners, but it's not meant as a complete replacement. Compatibility with Bash versions older than 5.0 is not guaranteed.
@@ -27,7 +27,7 @@ $ git submodule update --init
 You can update `makesh` to the latest version with
 
 ```shell
-$ ./make.sh --update
+$ ./make --update
 ```
 
 which basically runs 
@@ -44,7 +44,7 @@ $ makesh/generate.sh
 ```
 > **Note:** see `makesh/generate.sh --help` for more information and CLI options.
 
-This will create a simple `make.sh` file in your current directory (using `pwd`) with the basic imports and a default target.
+This will create a simple `make` shell script in your current directory (using `pwd`) with the basic imports and a default target.
 You will only need to write your build targets as explained in the rest of the documentation, `makesh` will take care of the CLI and utilities.
 
 A `.shellcheckrc` will also be generated alongside the script with useful defaults for Shellcheck users (mainly to disable [SC2317](https://github.com/koalaman/shellcheck/wiki/SC2317)). This is the default behaviour but it can be disabled using the corresponding CLI flag.
@@ -52,13 +52,13 @@ A `.shellcheckrc` will also be generated alongside the script with useful defaul
 You can run a target by calling
 
 ```shell
-$ ./make.sh <target>
+$ ./make <target>
 ```
 
 or, without specifying a target, `make::all` will be called
 
 ```shell
-$ ./make.sh
+$ ./make
 ```
 
 ### Writing targets
@@ -88,9 +88,9 @@ make::your_target() {                       # (1)
 }
 ```
 
-> Keep in mind that the `make::all` target can be executed by not passing any target name to the `make.sh` script, as mentioned above.
+> Keep in mind that the `make::all` target can be executed by not passing any target name to the `make` script, as mentioned above.
 
-You can also just source other files containing valid targets (and **just** the targets, no sourcing of `makesh` files) in your `make.sh` script and use them just the same as if they were in the main script. Note that `source` will not change the current working directory.
+You can also just source other files containing valid targets (and **just** the targets, no sourcing of `makesh` files) in your `make` script and use them just the same as if they were in the main script. Note that `source` will not change the current working directory.
 
 ```sh
 # scripts/utility.sh
@@ -101,7 +101,7 @@ make::utility() {
 ```
 
 ```sh
-# make.sh
+# make
 
 make::all() {
     source ./include.sh
@@ -110,7 +110,7 @@ make::all() {
 }
 ```
 
-Running `./make.sh` will yield:
+Running `./make` will output:
 ```
 ==> Running target make::all
 ==> Included target
@@ -127,7 +127,7 @@ The CLI is provided automatically by sourcing `runtime.sh`. It can:
 
 For more information and full usage, see
 ```shell
-$ ./make.sh --help
+$ ./make --help
 ```
 
 ## Library
@@ -173,7 +173,7 @@ The "standard library" structure can be summed up as follows:
 ---
 
 ### `generate.sh`
-Simple shell script which generates a `make.sh` example file in your root project directory (or an arbitrary directory).
+Simple shell script which generates a `make` example file in your root project directory (or an arbitrary directory).
 Get more information with
 
 ```shell
@@ -214,7 +214,7 @@ lib::check_file() {
 ```
 
 #### `$makesh_script`
-The absolute path to the root `make.sh` script in the project directory. For example `/home/user/project/make.sh`.
+The absolute path to the root `make` script in the project directory. For example `/home/user/project/make`.
 
 #### `$makesh_script_dir`
 The absolute path of the directory of `$makesh_script` (the project directory). For example `/home/user/project`.
@@ -301,7 +301,7 @@ Will basically resume execution after skipping a single target, in short.
 ---
 
 ### `runtime.sh`
-Contains code for the main entrypoint of the generated `make.sh` script. Does not export functions. Generates output for `--help` automatically and parses command line flags.
+Contains code for the main entrypoint of the generated `make` script. Does not export functions. Generates output for `--help` automatically and parses command line flags.
 
 ---
 
