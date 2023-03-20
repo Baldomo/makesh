@@ -42,6 +42,8 @@ _generate_script() {
     cat <<EOF > "$1"
 #!/usr/bin/env bash
 makesh_lib_dir="$_makesh_dir"
+[[ \$(git submodule status "\$makesh_lib_dir" 2>/dev/null) =~ ^- ]] && \\
+    git submodule update --remote --init "\$makesh_lib_dir"
 source "\$makesh_lib_dir"/lib.sh
 source "\$makesh_lib_dir"/message.sh
 
