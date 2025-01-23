@@ -42,7 +42,9 @@ To start using `makesh` after placing the submodule in your project directory, j
 ```shell
 $ makesh/generate.sh
 ```
-> **Note:** see `makesh/generate.sh --help` for more information and CLI options.
+
+> [!NOTE]
+> See `makesh/generate.sh --help` for more information and CLI options.
 
 This will create a simple `make` shell script in your current directory (using `pwd`) with the basic imports and a default target.
 You will only need to write your build targets as explained in the rest of the documentation, `makesh` will take care of the CLI and utilities.
@@ -72,6 +74,7 @@ Targets are to be defined before importing `runtime.sh`. Each "target" is a Bash
 7. can use utility functions provided by `makesh`
 8. provides its own documentation with special comment syntax
 
+> [!TIP]
 > Think of your `makesh` script more like a normal Bash script than a special file: being simple functions, targets are really powerful! You can source run any other function or command, create and remove files and even source other `makesh` scripts (see below).
 
 For example:
@@ -132,7 +135,8 @@ $ ./make --help
 
 ## Library
 
-> ⚠️ The API is very prone to breaking changes, but the documentation will always be fairly extensive.
+> [!WARNING]
+> The API is very prone to breaking changes, but the documentation will always be fairly extensive.
 
 `makesh` provides a simple utility library in the form of `source`-able shell scripts. Generally, sourcing one of such files will add:
 - functions prefixed by a sort of namespace like `lib::` or `msg::`
